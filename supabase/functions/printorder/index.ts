@@ -170,16 +170,95 @@ Deno.serve(async (req: Request) => {
 });
 
 function buildHTML(order: any, items: any[]): string {
+  // 🎯 Função auxiliar para extrair nome seguro
+  const extractName = (value: any): string => {
+    if (!value) return '-';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'object' && value.name) return String(value.name);
+    return String(value);
+  };
+
+  // 🎨 Renderizar cada item com todos os detalhes
   const itemsHTML = items
-    .map(
-      (item) => `
-    <div style="margin-bottom: 10px;">
-      <strong>${item.quantity}x ${item.product_name}</strong>
-      ${item.size ? `<div style="font-size: 12px;">Tamanho: ${item.size}</div>` : ""}
-      ${item.custom_ingredients ? `<div style="font-size: 12px;">Adicionais: ${item.custom_ingredients}</div>` : ""}
-    </div>
-  `
-    )
+    .map((item) => {
+      let html = `
+    <div style="margin-bottom: 12px; border-bottom: 1px dotted #333; padding-bottom: 8px;">
+      <div style="font-weight: bold; margin-bottom: 4px; font-size: 14px;">
+        ${item.quantity}x ${item.product_name}${item.size ? ` (${item.size})` : ''}
+      </div>
+  `;
+
+      // 📦 Acessar item_data (JSONB) que contém todos os detalhes
+      const itemData = item.item_data || {};
+
+      // Tipo de pizza
+      if (itemData.pizzaType) {
+        const typeLabel = itemData.pizzaType === 'meia-meia' ? 'Meia-Meia' : 'Inteira';
+        html += `<div style="margin-left: 8px; font-size: 12px;">Tipo: ${typeLabel}</div>`;
+      }
+
+      // Sabores simples (não combo)
+      if (itemData.sabor1 && !itemData.comboPizzas?.length) {
+        html += `<div style="margin-left: 8px; font-size: 12px;">Sabor: ${extractName(itemData.sabor1)}</div>`;
+        if (itemData.sabor2) {
+          html += `<div style="margin-left: 8px; font-size: 12px;">Sabor 2: ${extractName(itemData.sabor2)}</div>`;
+        }
+      }
+
+      // Meia-meia (metades)
+      if (itemData.halfOne || itemData.halfTwo) {
+        html += `<div style="margin-left: 8px; font-size: 12px;">
+        Meia: ${extractName(itemData.halfOne)} | ${extractName(itemData.halfTwo)}
+      </div>`;
+      }
+
+      // Combos com múltiplas pizzas
+      if (itemData.comboPizzas && Array.isArray(itemData.comboPizzas) && itemData.comboPizzas.length > 0) {
+        html += `<div style="margin-left: 8px; font-size: 12px; font-weight: bold; margin-top: 4px;">Pizzas:</div>`;
+        itemData.comboPizzas.forEach((pizza: any, idx: number) => {
+          const pizzaName = extractName(pizza.pizzaName || pizza.name || `Pizza ${idx + 1}`);
+          if (pizza.isHalfHalf) {
+            html += `<div style="margin-left: 16px; font-size: 11px;">
+          • ${pizzaName} (${extractName(pizza.halfOne)} | ${extractName(pizza.halfTwo)})
+        </div>`;
+          } else {
+            html += `<div style="margin-left: 16px; font-size: 11px;">
+          • ${pizzaName}
+        </div>`;
+          }
+        });
+      }
+
+      // Borda
+      if (itemData.border) {
+        html += `<div style="margin-left: 8px; font-size: 12px;">Borda: ${extractName(itemData.border)}</div>`;
+      }
+
+      // Bebida
+      if (itemData.drink) {
+        html += `<div style="margin-left: 8px; font-size: 12px;">Bebida: ${extractName(itemData.drink)}</div>`;
+      }
+
+      // Extras/Adicionais
+      if (itemData.extras && Array.isArray(itemData.extras) && itemData.extras.length > 0) {
+        const extrasStr = itemData.extras.map((e: any) => extractName(e)).join(', ');
+        html += `<div style="margin-left: 8px; font-size: 12px;">+ ${extrasStr}</div>`;
+      }
+
+      // Custom Ingredients
+      if (itemData.customIngredients && Array.isArray(itemData.customIngredients) && itemData.customIngredients.length > 0) {
+        const customStr = itemData.customIngredients.map((c: any) => extractName(c)).join(', ');
+        html += `<div style="margin-left: 8px; font-size: 12px;">Custom: ${customStr}</div>`;
+      }
+
+      // Observações
+      if (itemData.notes) {
+        html += `<div style="margin-left: 8px; font-size: 11px; font-style: italic; color: #666;">Obs: ${itemData.notes}</div>`;
+      }
+
+      html += `</div>`;
+      return html;
+    })
     .join("");
 
   const pointsDiscountHTML = order.points_discount && order.points_discount > 0 
@@ -193,15 +272,18 @@ function buildHTML(order: any, items: any[]): string {
       <meta charset="UTF-8">
       <style>
         body { font-family: Arial, sans-serif; max-width: 400px; padding: 20px; }
-        h2 { text-align: center; margin-bottom: 20px; }
-        .total { font-size: 18px; font-weight: bold; margin-top: 20px; text-align: center; border-top: 2px solid #000; padding-top: 10px; }
+        h2 { text-align: center; margin-bottom: 20px; margin-top: 0; }
+        .order-info { margin-bottom: 10px; font-size: 12px; }
+        .separator { border-top: 1px solid #333; margin-bottom: 10px; }
+        .total { font-size: 16px; font-weight: bold; margin-top: 10px; text-align: center; border-top: 2px solid #000; padding-top: 10px; }
+        hr { border: none; border-top: 1px dashed #333; margin: 10px 0; }
       </style>
     </head>
     <body>
-      <h2>COMANDA</h2>
-      <div>Pedido: ${order.id}</div>
-      <div>Data: ${new Date(order.created_at).toLocaleString("pt-BR")}</div>
-      <div>Cliente: ${order.customer_name || "S/N"}</div>
+      <h2>🍕 COMANDA 🍕</h2>
+      <div class="order-info"><strong>Pedido:</strong> ${order.id}</div>
+      <div class="order-info"><strong>Data:</strong> ${new Date(order.created_at).toLocaleString("pt-BR")}</div>
+      <div class="order-info"><strong>Cliente:</strong> ${order.customer_name || "S/N"}</div>
       <hr>
       <div>${itemsHTML}</div>
       ${pointsDiscountHTML}
