@@ -48,29 +48,6 @@ export function Header({ onLoginClick }: HeaderProps) {
             >
               Cardápio
             </a>
-            
-            {/* Delivery & Pickup Badges */}
-            <div className="flex items-center gap-3">
-              <Badge
-                variant="outline"
-                className="gap-2 bg-gradient-to-r from-blue-500/10 to-blue-600/10 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950 cursor-default"
-              >
-                <Truck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                <span className="text-xs font-semibold">
-                  {deliveryTimeMin}–{deliveryTimeMax}min
-                </span>
-              </Badge>
-              
-              <Badge
-                variant="outline"
-                className="gap-2 bg-gradient-to-r from-amber-500/10 to-amber-600/10 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-950 cursor-default"
-              >
-                <Store className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                <span className="text-xs font-semibold">
-                  {pickupTimeMin}–{pickupTimeMax}min
-                </span>
-              </Badge>
-            </div>
           </nav>
 
           {/* Theme Toggle, Login/Profile & Cart Button */}
