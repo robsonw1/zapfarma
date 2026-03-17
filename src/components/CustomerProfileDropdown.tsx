@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useLoyaltyStore } from '@/store/useLoyaltyStore';
 import { useAddressNotification } from '@/hooks/use-address-notification';
+import { useProfileFirstAccess } from '@/hooks/use-profile-first-access';
+import { useOrdersNotification } from '@/hooks/use-orders-notification';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -8,7 +10,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Progress } from '@/components/ui/progress';
-import { LogOut, Sparkles, TrendingUp, Gift, Clock, MapPin, Package, HelpCircle } from 'lucide-react';
+import { LogOut, Sparkles, Gift, Clock, MapPin, Package, HelpCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { CustomerHistoryDrawer } from '@/components/CustomerHistoryDrawer';
 import { CustomerOrdersDrawer } from '@/components/CustomerOrdersDrawer';
@@ -37,8 +39,20 @@ export function CustomerProfileDropdown() {
     isLoading: isOnboardingLoading,
   } = useCustomerOnboarding();
 
+  // Hook para rastrear primeiro acesso ao perfil (pulse na primeira visita)
+  const {
+    showPulseNotification,
+    markProfileAsViewed,
+  } = useProfileFirstAccess();
+
   // Hook para gerenciar notificação de endereço incompleto
   const { showAddressNotification } = useAddressNotification();
+
+  // Hook para gerenciar notificação de pedidos (pulse quando há novo pedido/status)
+  const {
+    showOrdersNotification,
+    markOrdersAsViewed,
+  } = useOrdersNotification();
 
   if (!currentCustomer) {
     return null;
@@ -75,6 +89,12 @@ export function CustomerProfileDropdown() {
     setIsOpen(false);
   };
 
+  const handleOrdersOpen = async () => {
+    setOrdersOpen(true);
+    // Marcar como visualizado quando abrir o drawer
+    await markOrdersAsViewed();
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -86,15 +106,32 @@ export function CustomerProfileDropdown() {
 
   return (
     <>
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <Popover open={isOpen} onOpenChange={(open) => {
+        setIsOpen(open);
+        // Quando abrir o popover, marcar primeira visita como visualizada
+        if (open && showPulseNotification) {
+          markProfileAsViewed();
+        }
+      }}>
         <PopoverTrigger asChild>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 transition-colors relative cursor-pointer"
+            className={`flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 transition-colors relative cursor-pointer ${
+              (showPulseNotification || showOrdersNotification) ? 'animate-pulse' : ''
+            }`}
             title={currentCustomer.name}
           >
             {getInitials(currentCustomer.name || 'C')}
+            
+            {/* Badge - primeira vez ou novo pedido/status alterado */}
+            {(showPulseNotification || showOrdersNotification) && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-primary-foreground shadow-lg"
+              />
+            )}
           </motion.button>
         </PopoverTrigger>
 
@@ -162,18 +199,18 @@ export function CustomerProfileDropdown() {
                 </div>
               </div>
 
-              {/* Total Gasto */}
-              <div className="flex items-center justify-between bg-secondary/50 rounded-lg p-3">
+              {/* Economizado com Pontos */}
+              <div className="flex items-center justify-between bg-gradient-to-r from-green-500/10 to-green-400/5 rounded-lg p-3 border border-green-500/20">
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium">Gasto</span>
+                  <Gift className="w-4 h-4 text-green-500" />
+                  <span className="text-sm font-medium">Economizado</span>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-sm">
-                    R$ {currentCustomer.totalSpent.toFixed(2)}
+                  <p className="font-bold text-sm text-green-600">
+                    R$ {pointsValue.toFixed(2)}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {currentCustomer.totalPurchases} compras
+                    com seus {currentCustomer.totalPoints} pontos
                   </p>
                 </div>
               </div>
@@ -183,13 +220,33 @@ export function CustomerProfileDropdown() {
             <div className="pt-2 border-t space-y-2">
               <Button
                 id="btn-meus-pedidos"
-                onClick={() => setOrdersOpen(true)}
+                onClick={handleOrdersOpen}
                 variant="outline"
                 size="sm"
-                className="w-full flex items-center justify-center gap-2"
+                className={`w-full flex items-center justify-center gap-2 relative ${
+                  showOrdersNotification ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/20' : ''
+                }`}
               >
-                <Package className="w-4 h-4" />
+                <div className="relative">
+                  <Package className="w-4 h-4" />
+                  {showOrdersNotification && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-2 -right-2 w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse"
+                    />
+                  )}
+                </div>
                 Meus Pedidos
+                {showOrdersNotification && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="ml-auto"
+                  >
+                    <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+                  </motion.div>
+                )}
               </Button>
               <Button
                 id="btn-meu-endereco"

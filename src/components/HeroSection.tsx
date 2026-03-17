@@ -1,11 +1,14 @@
-import { Clock, MapPin, Phone } from 'lucide-react';
+import { Clock, MapPin, Phone, Truck, Store } from 'lucide-react';
 import { useSettingsStore } from '@/store/useSettingsStore';
+import { Badge } from '@/components/ui/badge';
 
 export function HeroSection() {
   const slogan = useSettingsStore((s) => s.settings.slogan);
   const phone = useSettingsStore((s) => s.settings.phone);
   const deliveryTimeMin = useSettingsStore((s) => s.settings.deliveryTimeMin);
   const deliveryTimeMax = useSettingsStore((s) => s.settings.deliveryTimeMax);
+  const pickupTimeMin = useSettingsStore((s) => s.settings.pickupTimeMin);
+  const pickupTimeMax = useSettingsStore((s) => s.settings.pickupTimeMax);
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-secondary/50 to-background py-12 md:py-20">
@@ -21,6 +24,29 @@ export function HeroSection() {
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-6">
             <span className="text-xl">🇮🇹</span>
             <span className="text-sm font-medium">{slogan}</span>
+          </div>
+
+          {/* Delivery & Pickup Badges */}
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
+            <Badge
+              variant="outline"
+              className="gap-2 bg-gradient-to-r from-blue-500/10 to-blue-600/10 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950 cursor-default"
+            >
+              <Truck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <span className="text-xs font-semibold">
+                {deliveryTimeMin}–{deliveryTimeMax}min
+              </span>
+            </Badge>
+            
+            <Badge
+              variant="outline"
+              className="gap-2 bg-gradient-to-r from-amber-500/10 to-amber-600/10 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-950 cursor-default"
+            >
+              <Store className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <span className="text-xs font-semibold">
+                {pickupTimeMin}–{pickupTimeMax}min
+              </span>
+            </Badge>
           </div>
 
           {/* Main Title */}
