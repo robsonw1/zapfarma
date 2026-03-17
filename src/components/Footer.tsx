@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useSettingsStore, WeekSchedule } from '@/store/useSettingsStore';
 import { useLoyaltyStore } from '@/store/useLoyaltyStore';
 import { CustomerProfileDropdown } from '@/components/CustomerProfileDropdown';
+import { ScheduleDialog } from '@/components/ScheduleDialog';
 import logoForneiro from '@/assets/logo-forneiro.jpg';
 import { Link } from 'react-router-dom';
 
@@ -87,9 +88,12 @@ export function Footer({ onLoginClick, onAdminClick }: FooterProps) {
                 <MapPin className="w-4 h-4" />
                 <span>{settings.address}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                <span>{buildScheduleString()}</span>
+              <div className="flex items-start gap-2">
+                <Clock className="w-4 h-4 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">{buildScheduleString()}</p>
+                  <ScheduleDialog />
+                </div>
               </div>
             </div>
           </div>
