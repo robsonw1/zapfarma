@@ -53,6 +53,7 @@ export function Header({ onLoginClick }: HeaderProps) {
           {/* Theme Toggle, Login/Profile & Cart Button */}
           <div className="flex items-center gap-2 md:gap-4">
             <Button
+              id="btn-theme-toggle"
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
