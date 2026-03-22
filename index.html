@@ -32,6 +32,17 @@
     <meta name="twitter:title" content="Pizzaria Forneiro Eden" />
     <meta name="twitter:description" content="🍕Cardápio digital - Peça sua pizza deliciosa agora 🇮🇹" />
     <meta name="twitter:image" content="https://forneiro-eden-app.aezap.site/logo-512.png" />
+
+    <!-- Runtime Environment Variables Injection -->
+    <script>
+      window.__ENV__ = {
+        VITE_SUPABASE_PROJECT_ID: '${VITE_SUPABASE_PROJECT_ID}',
+        VITE_SUPABASE_PUBLISHABLE_KEY: '${VITE_SUPABASE_PUBLISHABLE_KEY}',
+        VITE_SUPABASE_URL: '${VITE_SUPABASE_URL}',
+        VITE_APP_URL: '${VITE_APP_URL}'
+      };
+      console.log('✅ Runtime environment variables loaded:', window.__ENV__);
+    </script>
   </head>
 
   <body>
