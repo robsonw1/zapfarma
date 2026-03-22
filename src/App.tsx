@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { SupabaseProvider } from "@/lib/supabase-provider";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { useAdminRealtimeSync } from "@/hooks/use-admin-realtime-sync";
 import { useSettingsRealtimeSync } from "@/hooks/use-settings-realtime-sync";
@@ -53,16 +54,18 @@ const AppContent = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <PWAInstallBanner />
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <SupabaseProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <PWAInstallBanner />
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </SupabaseProvider>
 );
 
 export default App;
