@@ -927,4 +927,3 @@ export function ProductModal() {
     </Dialog>
   );
 }
-
