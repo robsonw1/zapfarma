@@ -28,6 +28,7 @@ import { useStoreStatusRealtime } from '@/hooks/use-store-status-realtime';
 import { useSettingsRealtimeSync } from '@/hooks/use-settings-realtime-sync';
 import { supabase } from '@/integrations/supabase/client';
 import { sendOrderSummaryToWhatsApp } from '@/lib/whatsapp-notification';
+import { useReceiptValidation } from '@/hooks/use-receipt-validation';
 import { PostCheckoutLoyaltyModal } from './PostCheckoutLoyaltyModal';
 import { 
   User, 
@@ -146,6 +147,9 @@ export function CheckoutModal() {
   const redeemPoints = useLoyaltyStore((s) => s.redeemPoints);
   const currentCustomer = useLoyaltyStore((s) => s.currentCustomer);
   const isRemembered = useLoyaltyStore((s) => s.isRemembered);
+
+  // 💊 Receipt validation for medications
+  const { hasUnvalidatedMedications, medicationNames } = useReceiptValidation(items);
 
   // 🔴 REALTIME: Cancelamentos de pedidos
   useOrderCancellationSync(
@@ -2038,6 +2042,18 @@ export function CheckoutModal() {
                   exit={{ opacity: 0, x: -20 }}
                   className="space-y-4"
                 >
+                  {/* 💊 Receipt Alert for Medications */}
+                  {hasUnvalidatedMedications && (
+                    <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800">
+                      <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      <AlertDescription className="text-blue-800 dark:text-blue-200">
+                        ⚕️ <strong>Medicamentos com Receita:</strong> {medicationNames}
+                        <br />
+                        <span className="text-sm">Suas receitas foram coletadas. A farmácia fará a validação antes de liberar o pedido.</span>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
                   <h3 className="font-semibold flex items-center gap-2">
                     <CreditCard className="w-5 h-5 text-primary" />
                     Forma de Pagamento
