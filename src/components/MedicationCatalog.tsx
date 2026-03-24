@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { MedicationCard } from '@/components/MedicationCard';
 import { ReceiptUploadModal } from '@/components/ReceiptUploadModal';
-import { useCatalogStore } from '@/store/useCatalogStore';
+import { useMedicationStore } from '@/store/useMedicationStore';
 import { useLoyaltyStore } from '@/store/useLoyaltyStore';
 import { useReceiptStore } from '@/store/useReceiptStore';
+import { useMedicationCatalog } from '@/hooks/use-pharmacy';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Medication, medicationCategories } from '@/data/medications';
+import { Medication, medicationCategories } from '@/data/pharmacy';
 import { Search, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -16,10 +17,21 @@ export function MedicationCatalog() {
   const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
 
-  const allMedications = useCatalogStore((s) => s.getAll());
+  // Carregar medicamentos do Supabase (com fallback para mock)
+  const { medications } = useMedicationCatalog();
+  
+  // Store
+  const store = useMedicationStore();
   const currentCustomer = useLoyaltyStore((s) => s.currentCustomer);
   const receipts = useReceiptStore((s) => s.receipts);
   const loadReceiptsFromSupabase = useReceiptStore((s) => s.loadReceiptsFromSupabase);
+
+  // Sincronizar medicamentos carregados com o store
+  useEffect(() => {
+    if (medications.length > 0) {
+      store.setMedications(medications);
+    }
+  }, [medications, store]);
 
   // Carregar receitas do cliente ao montar
   useEffect(() => {
@@ -28,13 +40,13 @@ export function MedicationCatalog() {
     }
   }, [currentCustomer?.id, loadReceiptsFromSupabase]);
 
-  const filterBySearch = (items: any[]) => {
+  const filterBySearch = (items: Medication[]) => {
     if (!searchQuery) return items;
     return items.filter(
       (m) =>
         m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         m.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (m.activeIngredient?.toLowerCase().includes(searchQuery.toLowerCase()) || true)
+        (m.active_ingredient?.toLowerCase().includes(searchQuery.toLowerCase()) || true)
     );
   };
 
@@ -48,17 +60,25 @@ export function MedicationCatalog() {
   };
 
   const handleMedicationClick = (medication: Medication) => {
-    if (medication.requiresRecipe && !hasValidReceipt(medication.id)) {
+    if (medication.requires_recipe && !hasValidReceipt(medication.id)) {
       setSelectedMedication(medication);
       setShowReceiptModal(true);
     } else {
-      // Adicionar ao carrinho (integrar com checkout)
-      console.log('Adicionar ao carrinho:', medication.name);
+      // Adicionar ao carrinho
+      store.addToCart({
+        id: medication.id,
+        medication,
+        quantity: 1,
+        totalPrice: medication.price,
+      });
     }
   };
 
+  // Medicamentos do store (sincronizados com dados do Supabase)
+  const allMedications = store.medications;
+  
   // Filtrar medicamentos por categoria ativa
-  const medicationsByCategory = allMedications.filter((m: any) => m.category === activeTab);
+  const medicationsByCategory = allMedications.filter((m: Medication) => m.category === activeTab);
   const filteredMedications = filterBySearch(medicationsByCategory);
 
   return (
@@ -105,9 +125,9 @@ export function MedicationCatalog() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid grid-cols-4 lg:grid-cols-8 gap-2 mb-8 h-auto">
-            {medicationCategories.map((category) => (
-              <TabsTrigger key={category.id} value={category.id} className="whitespace-nowrap text-sm">
-                {category.name}
+            {Object.entries(medicationCategories).map(([id, name]) => (
+              <TabsTrigger key={id} value={id} className="whitespace-nowrap text-sm">
+                {name}
               </TabsTrigger>
             ))}
           </TabsList>
