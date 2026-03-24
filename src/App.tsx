@@ -16,25 +16,24 @@ import { useSettingsStore } from "@/store/useSettingsStore";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import Index from "./pages/Index.tsx";
 import AdminLogin from "./pages/AdminLogin.tsx";
-import AdminDashboard from "./pages/AdminDashboard.tsx";
+import PharmacyAdminDashboard from "./pages/PharmacyAdminDashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
 
 // Componente wrapper para usar hooks
 const AppContent = () => {
-  // ✅ Sincronização global de dados (produtos, bairros, etc)
+  // ✅ Sincronização global de dados (MEDICAMENTOS, bairros, etc)
   useRealtimeSync();
   
-  // ✅ NOVO: Sincronização específica para admins (pedidos em tempo real)
-  // Garante que TODOS os admins vejam pedidos novos/alterados
+  // ✅ Sincronização específica para admins (pedidos em tempo real)
   useAdminRealtimeSync();
   
   // Demais sincronizações
   useSettingsInitialLoad();
   useSettingsRealtimeSync();
   useScheduleSync();
-  useSettingsUpdateListener(); // ✅ Monitorar atualizações do admin
+  useSettingsUpdateListener();
   const { loadSettings } = useLoyaltySettingsStore();
 
   // Carregar configurações de fidelização ao iniciar
@@ -46,7 +45,7 @@ const AppContent = () => {
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/admin" element={<AdminLogin />} />
-      <Route path="/admin/dashboard" element={<AdminDashboard />} />
+      <Route path="/admin/dashboard" element={<PharmacyAdminDashboard />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>
