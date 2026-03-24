@@ -29,7 +29,7 @@ export function MedicationCatalog() {
   // Sincronizar medicamentos carregados com o store
   useEffect(() => {
     store.setMedications(medications);
-  }, [medications, store]);
+  }, [medications]);
 
   // Carregar receitas do cliente ao montar
   useEffect(() => {
